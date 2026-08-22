@@ -1,94 +1,145 @@
 import 'package:flutter/material.dart';
 import '../../models/medicine_model.dart';
 import '../../utils/constants.dart';
+import 'package:flutter_project/screens/record_details.dart';
 
 class MedicineCard extends StatelessWidget {
   final Medicine medicine;
   final VoidCallback? onDelete;
+  final VoidCallback? onToggleTaken;
 
-  const MedicineCard({super.key, required this.medicine, this.onDelete});
+  const MedicineCard({
+    super.key,
+    required this.medicine,
+    this.onDelete,
+    this.onToggleTaken,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final style = styleForCategory(medicine.category);
+
+    final card = InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => MedicineScreen(medicine: medicine)));
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 2)),
+          ],
+        ),
+        child: Row(
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.medication, color: primaryColor, size: 28),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        medicine.name,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
-                      ),
-                      const SizedBox(height: 4),
-                      Text('${medicine.type} • ${medicine.dosage}', style: const TextStyle(fontSize: 14, color: subTextColor)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(medicine.category, style: const TextStyle(color: primaryColor, fontWeight: FontWeight.w600, fontSize: 12)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.schedule, size: 16, color: subTextColor),
-                    const SizedBox(width: 4),
-                    Text(medicine.time, style: const TextStyle(fontSize: 13, color: subTextColor)),
-                    const SizedBox(width: 12),
-                    const Icon(Icons.repeat, size: 16, color: subTextColor),
-                    const SizedBox(width: 4),
-                    Text(medicine.frequency, style: const TextStyle(fontSize: 13, color: subTextColor)),
-                  ],
-                ),
-                if (onDelete != null)
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                    onPressed: onDelete,
-                  ),
-              ],
-            ),
-            if (medicine.notes.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
-                child: Text('Note: ${medicine.notes}', style: const TextStyle(fontSize: 12, color: subTextColor, fontStyle: FontStyle.italic)),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: style.color,
+                borderRadius: BorderRadius.circular(12),
               ),
-            ],
+              child: Icon(style.icon, color: textColor, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(medicine.name,
+                      style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: textColor)),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${medicine.dosage} • ${medicine.category}',
+                    style: const TextStyle(fontSize: 13, color: subTextColor),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(medicine.time,
+                    style: const TextStyle(fontSize: 12, color: subTextColor)),
+                const SizedBox(height: 6),
+                GestureDetector(
+                  onTap: onToggleTaken,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: medicine.taken
+                          ? const Color(0xFFE6E6E6)
+                          : primaryColor,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      medicine.taken ? 'Taken' : 'Take',
+                      style: TextStyle(
+                        color: medicine.taken ? subTextColor : Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
+    );
+
+    if (onDelete == null) return card;
+
+    return Dismissible(
+      key: ValueKey(medicine.id),
+      direction: DismissDirection.endToStart,
+      confirmDismiss: (_) async {
+        return await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Delete Medicine'),
+                content:
+                    Text('Are you sure you want to delete "${medicine.name}"?'),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Cancel')),
+                  TextButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Delete',
+                          style: TextStyle(color: Colors.red))),
+                ],
+              ),
+            ) ??
+            false;
+      },
+      onDismissed: (_) => onDelete!(),
+      background: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        alignment: Alignment.centerRight,
+        decoration: BoxDecoration(
+          color: Colors.redAccent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(Icons.delete_outline, color: Colors.white),
+      ),
+      child: card,
     );
   }
 }
