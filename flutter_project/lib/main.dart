@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'providers/medicine_provider.dart';
-import 'screens/home.dart';
+import 'screens/main_shell.dart';
+import 'services/database_service.dart';
 import 'utils/constants.dart';
 
-void main() {
-  runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final database = MedicineDatabase();
+  await database.init();
+  runApp(MyApp(database: database));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, required this.database});
+  final MedicineDatabase database;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => MedicineCubit()..loadMedicines(),
+      create: (context) => MedicineCubit(database)..loadMedicines(),
       child: MaterialApp(
         title: 'Medicine Tracker',
         debugShowCheckedModeBanner: false,
@@ -24,7 +29,7 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: primaryColor),
           useMaterial3: true,
         ),
-        home: const HomeScreen(),
+        home: const MainShell(),
       ),
     );
   }

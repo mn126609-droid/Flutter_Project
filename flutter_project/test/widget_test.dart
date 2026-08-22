@@ -1,30 +1,54 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:flutter_project/main.dart';
+import 'package:flutter_project/models/medicine_model.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  test('Medicine toMap/fromMap round-trip preserves all fields', () {
+    final medicine = Medicine(
+      id: 1,
+      name: 'Vitamin D3',
+      dosage: '1000 IU',
+      category: 'Vitamins',
+      type: 'Capsule',
+      frequency: 'Once daily',
+      duration: '30 days',
+      date: DateTime(2026, 1, 1),
+      time: '08:00 AM',
+      notes: 'Take after breakfast',
+      taken: true,
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    final restored = Medicine.fromMap(medicine.toMap());
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    expect(restored.id, medicine.id);
+    expect(restored.name, medicine.name);
+    expect(restored.dosage, medicine.dosage);
+    expect(restored.category, medicine.category);
+    expect(restored.type, medicine.type);
+    expect(restored.frequency, medicine.frequency);
+    expect(restored.duration, medicine.duration);
+    expect(restored.date, medicine.date);
+    expect(restored.time, medicine.time);
+    expect(restored.notes, medicine.notes);
+    expect(restored.taken, medicine.taken);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  test('Medicine copyWith only overrides given fields', () {
+    final medicine = Medicine(
+      id: 1,
+      name: 'Amoxicillin',
+      dosage: '500 mg',
+      category: 'Antibiotics',
+      type: 'Tablet',
+      frequency: 'Every 8 hours',
+      duration: '7 days',
+      date: DateTime(2026, 1, 1),
+      time: '12:00 PM',
+    );
+
+    final updated = medicine.copyWith(taken: true);
+
+    expect(updated.taken, true);
+    expect(updated.name, medicine.name);
+    expect(updated.id, medicine.id);
   });
 }
